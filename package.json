@@ -1,0 +1,9 @@
+{
+  "name": "biancas-adventures",
+  "private": true,
+  "workspaces": ["worker", "frontend"],
+  "scripts": {
+    "test:worker": "npm test --workspace=worker",
+    "test:frontend": "npm test --workspace=frontend"
+  }
+}

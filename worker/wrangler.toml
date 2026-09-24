@@ -1,0 +1,9 @@
+﻿name = "biancas-adventures-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+[vars]
+SUPABASE_URL = ""
+
+# Secrets set via `wrangler secret put`, never committed:
+# SUPABASE_ANON_KEY, SUPABASE_JWT_SECRET, GEMINI_API_KEY
