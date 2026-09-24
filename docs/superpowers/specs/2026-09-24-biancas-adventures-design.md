@@ -57,71 +57,104 @@ nessun servizio con costi ricorrenti previsti nell'uso personale.
 Nessuna chiave API (Gemini, Supabase service key) è mai esposta nel bundle frontend: tutte
 le chiamate esterne sensibili passano dal Cloudflare Worker.
 
-## 4. Autenticazione e privacy (multi-tenant ready)
+## 4. Autenticazione, privacy e album collaborativi multi-utente
 
 Pur essendo pubblicata su internet come PWA (nessuno store), l'app **non deve mostrare le
 foto a chiunque trovi l'URL**. Si usa **Supabase Auth** (incluso nel tier gratuito già in
-uso per il database, nessun servizio aggiuntivo):
+uso per il database, nessun servizio aggiuntivo) per il login, e un concetto di **Album**
+come entità di gruppo per la collaborazione tra più utenti registrati.
 
 - **Login**: schermata iniziale (email + password, o magic link via email) prima di
   accedere alla mappa. La sessione persiste sul dispositivo (nessun login ripetuto ad ogni
   apertura della PWA).
-- **Isolamento dati per utente**: le tabelle `photos`, `ai_suggestions`, `user_settings`
-  includono `user_id`; **Row Level Security** attiva su Supabase garantisce che ogni utente
-  legga/scriva solo le proprie righe, imposta a livello di database (non solo applicativo).
-- **Worker**: ogni richiesta porta il token di sessione Supabase; il Worker lo valida,
-  estrae `user_id` e lo usa per tutte le query e per determinare quale album iCloud
-  sincronizzare per quell'utente.
-- **`city_themes` resta condivisa** tra tutti gli utenti (dato non sensibile, palette
-  colori riutilizzabile).
-- **Oggi**: un solo account (il tuo). **In futuro**: si possono aggiungere altri utenti
-  senza alcuna riscrittura, l'isolamento è già strutturale fin dal primo rilascio.
+- **Album come unità di condivisione**: un "Album" nell'app rappresenta un Album Condiviso
+  iCloud (un token) più tutte le posizioni/suggerimenti AI associati. Più utenti registrati
+  possono essere **membri dello stesso Album**, vedendo e arricchendo collaborativamente gli
+  stessi dati (chi geolocalizza una foto lo fa per tutto il gruppo).
+- **Iscrizione tramite codice invito**: chi crea un Album (incollando il link iCloud) ne
+  diventa `owner` e ottiene un codice invito rigenerabile da condividere; altri utenti
+  registrati lo inseriscono in Impostazioni per unirsi come `member`.
+- **Multi-album per utente**: un utente può appartenere a più Album diversi contemporaneamente
+  (es. "Famiglia" e "Viaggio con amici"); un selettore in Impostazioni permette di passare da
+  un Album all'altro, cambiando il contenuto mostrato sulla mappa.
+- **Permessi**: tutti i membri di un Album possono aggiungere/modificare posizioni delle foto
+  (piena collaborazione). Solo l'`owner` può rinominare l'Album, cambiare il link/token iCloud
+  o rigenerare il codice invito.
+- **Isolamento dati per Album**: le tabelle `photos` e `ai_suggestions` sono legate ad
+  `album_id` (non più a `user_id` singolo). **Row Level Security** su Supabase garantisce che
+  un utente legga/scriva solo i dati degli Album di cui è membro (verificato tramite la
+  tabella `album_members`), imposto a livello di database.
+- **Worker**: ogni richiesta porta il token di sessione Supabase; il Worker valida l'utente,
+  verifica la sua appartenenza all'`album_id` richiesto e usa quell'album per determinare
+  quale token iCloud sincronizzare.
+- **`city_themes` resta globale**, condivisa tra tutti gli Album e utenti (dato non
+  sensibile, palette colori riutilizzabile ovunque).
 
-### Tabella `user_settings`
+### Tabella `albums`
 | Campo | Tipo | Note |
 |---|---|---|
-| `user_id` | uuid, PK, FK → auth.users | |
-| `icloud_album_token` | text | Estratto dal link dell'Album Condiviso incollato dall'utente |
-| `updated_at` | timestamptz | |
+| `id` | uuid, PK | |
+| `name` | text | Nome scelto dall'owner (es. "Vacanze di famiglia") |
+| `icloud_album_token` | text | Estratto dal link dell'Album Condiviso incollato dall'owner |
+| `owner_user_id` | uuid, FK → auth.users | |
+| `invite_code` | text, unique | Rigenerabile solo dall'owner |
+| `created_at` | timestamptz | |
 
-Una schermata **Impostazioni** nella PWA permette a ciascun utente di incollare il link del
-proprio Album Condiviso (es. `https://www.icloud.com/sharedalbum/#TOKEN`); il Worker ne
-estrae il token e lo salva in `user_settings`. Il sync per un utente usa sempre e solo il
-proprio token — nessuna configurazione condivisa o hardcoded nel Worker.
+### Tabella `album_members`
+| Campo | Tipo | Note |
+|---|---|---|
+| `album_id` | uuid, FK → albums | |
+| `user_id` | uuid, FK → auth.users | |
+| `role` | enum: `owner` \| `member` | |
+| `joined_at` | timestamptz | |
+
+PK composita `(album_id, user_id)`: un utente può comparire in più righe (più album), un
+album può avere più membri.
+
+Nella schermata **Impostazioni** della PWA: selettore "I miei Album" per cambiare Album
+attivo, pulsante "Crea nuovo Album" (incolla link iCloud, diventi owner), pulsante
+"Unisciti con codice invito" (diventi member di un Album esistente).
 
 ## 5. Sorgente dati e sincronizzazione
 
-- Il token dell'Album Condiviso è per-utente (vedi §4, tabella `user_settings`), non più
-  una variabile d'ambiente globale del Worker.
-- Il Worker interroga l'endpoint pubblico **on-demand all'apertura dell'app**, con cache
-  breve (~5 minuti) per evitare chiamate eccessive; nessun polling continuo in background.
-- Ogni foto è identificata in modo stabile dal suo `photoGuid`, usato come chiave primaria
-  in Supabase per collegare posizione e stato AI nel tempo, anche tra sync successivi.
-- Ad ogni sync, il Worker confronta i `photoGuid` ricevuti con quelli già noti in Supabase:
-  i nuovi vengono inseriti con posizione `NULL` (appariranno nella coda "da posizionare").
+- Il token dell'Album Condiviso è per-Album (vedi §4, tabella `albums`), non più una
+  variabile d'ambiente globale del Worker né legato a un singolo utente.
+- Il Worker interroga l'endpoint pubblico **on-demand all'apertura dell'Album nell'app**,
+  con cache breve (~5 minuti) per evitare chiamate eccessive; nessun polling continuo in
+  background.
+- Ogni foto è identificata in modo stabile dal suo `photoGuid` (univoco per Album), usato
+  insieme ad `album_id` come chiave primaria composita in Supabase per collegare posizione
+  e stato AI nel tempo, anche tra sync successivi e tra membri diversi dello stesso Album.
+- Ad ogni sync, il Worker confronta i `photoGuid` ricevuti con quelli già noti per
+  quell'`album_id` in Supabase: i nuovi vengono inseriti con posizione `NULL` (appariranno
+  nella coda "da posizionare" per **tutti** i membri dell'Album).
 
 ## 6. Modello dati (Supabase / Postgres)
 
 ### Tabella `photos`
 | Campo | Tipo | Note |
 |---|---|---|
-| `photo_guid` | text, PK | Identificatore stabile dall'album iCloud |
+| `album_id` | uuid, FK → albums | Parte della PK composita |
+| `photo_guid` | text | Parte della PK composita (dall'album iCloud, univoco nell'album) |
 | `date_created` | timestamptz | Dalla risposta dell'album |
 | `caption` | text | Dalla risposta dell'album (può essere vuota) |
 | `thumb_url`, `full_url` | text | URL derivativi correnti (rinfrescati ad ogni sync, gli URL scadono) |
 | `latitude`, `longitude` | double precision, nullable | NULL finché non posizionata |
 | `location_source` | enum: `manual` \| `ai_accepted` | (nessun valore `exif`: mai disponibile in questa sorgente) |
 | `location_label` | text | Nome luogo/città da reverse geocoding |
+| `updated_by` | uuid, FK → auth.users | Ultimo membro che ha impostato/modificato la posizione |
 | `updated_at` | timestamptz | |
+
+PK composita `(album_id, photo_guid)`.
 
 ### Tabella `ai_suggestions`
 | Campo | Tipo | Note |
 |---|---|---|
-| `photo_guid` | text, FK → photos | |
+| `album_id`, `photo_guid` | FK composita → photos | |
 | `suggested_lat`, `suggested_lng` | double precision | |
 | `suggested_label` | text | Luogo suggerito in linguaggio naturale |
 | `reasoning` | text | Spiegazione breve generata da Gemini (es. "stessi vestiti della foto del 12/07 a Roma") |
-| `status` | enum: `pending` \| `accepted` \| `rejected` | Se `rejected`, non riproposto automaticamente (rigenerabile manualmente su richiesta esplicita) |
+| `status` | enum: `pending` \| `accepted` \| `rejected` | Se `rejected`, non riproposto automaticamente (rigenerabile manualmente su richiesta esplicita da un membro qualsiasi) |
 | `created_at` | timestamptz | |
 
 ### Tabella `city_themes`
@@ -226,9 +259,10 @@ basso volume (poche migliaia di foto, decine/centinaia di città uniche).
 
 - Login/accesso completo all'account Apple ID / libreria iCloud intera.
 - Notifiche push.
-- Supporto multi-album per superare il limite di ~1000 foto dell'Album Condiviso.
+- Combinare più Album Condivisi iCloud in un unico "Album" app per superare il limite di
+  ~1000 foto (un "Album" app resta sempre associato a un solo token/Album Condiviso iCloud).
 - Chat AI generale/esplorativa oltre al suggerimento di posizione (possibile estensione
   futura, non inclusa in questa fase).
-- Funzionalità social/condivisione tra utenti: il multi-tenant (§4) isola i dati per
-  utente, ma non è prevista alcuna condivisione incrociata di foto/album tra account
-  diversi in questa fase.
+- Funzionalità social oltre alla collaborazione di gruppo su un Album (es. commenti,
+  reazioni, chat tra membri): non incluse in questa fase, i membri collaborano solo tramite
+  posizionamento condiviso delle foto.
