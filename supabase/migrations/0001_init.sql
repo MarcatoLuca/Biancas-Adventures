@@ -82,7 +82,7 @@ $$;
 
 create policy "members can read their albums"
   on albums for select
-  using (is_album_member(id));
+  using (is_album_member(id) or owner_user_id = auth.uid());
 
 create policy "authenticated users can create albums"
   on albums for insert
