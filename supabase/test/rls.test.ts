@@ -51,15 +51,17 @@ describe('album RLS isolation', () => {
       .single();
     expect(albumError).toBeNull();
 
-    await ownerClient
+    const { error: membershipError } = await ownerClient
       .from('album_members')
       .insert({ album_id: album!.id, user_id: owner.userId, role: 'owner' });
+    expect(membershipError).toBeNull();
 
-    await ownerClient.from('photos').insert({
+    const { error: photoInsertError } = await ownerClient.from('photos').insert({
       album_id: album!.id,
       photo_guid: 'guid-1',
       caption: 'test photo',
     });
+    expect(photoInsertError).toBeNull();
 
     const outsiderClient = createClient(url, anonKey, {
       global: { headers: { Authorization: `Bearer ${outsider.accessToken}` } },

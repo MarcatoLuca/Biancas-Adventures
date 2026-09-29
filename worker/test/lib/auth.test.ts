@@ -27,10 +27,13 @@ function fakeContext(authHeader?: string) {
 describe('requireUser', () => {
   it('extracts the user id from a valid bearer token', async () => {
     const token = await makeToken('user-123');
-    const result = await requireUser(fakeContext(`Bearer ${token}`));
+    const authorization = `Bearer ${token}`;
+    const result = await requireUser(fakeContext(authorization));
 
     expect(result.userId).toBe('user-123');
     expect(result.supabase).toBeDefined();
+    expect(result.supabase.headers.Authorization).toBe(authorization);
+    expect(result.supabase.rest.headers.get('Authorization')).toBe(authorization);
   });
 
   it('throws for a missing Authorization header', async () => {
@@ -40,7 +43,7 @@ describe('requireUser', () => {
   it('throws for a tampered token', async () => {
     const token = await makeToken('user-123');
 
-    await expect(requireUser(fakeContext(`Bearer ${token}tampered`))).rejects.toThrow(
+    await expect(requireUser(fakeContext(`Bearer ${token}oops`))).rejects.toThrow(
       'unauthorized',
     );
   });
