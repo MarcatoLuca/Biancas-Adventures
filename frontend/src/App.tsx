@@ -9,16 +9,20 @@ import { MapView } from './map/MapView';
 import { usePhotos, type Photo } from './photos/usePhotos';
 import { PhotoGalleryPanel } from './photos/PhotoGalleryPanel';
 import { LocationPickerMap } from './photos/LocationPickerMap';
+import { UnplacedQueuePanel } from './photos/UnplacedQueuePanel';
+import { HudLayer } from './hud/HudLayer';
+import { HudButton } from './hud/HudButton';
 import type { Cluster } from './map/useClusteredPhotos';
 import './App.css';
 
 function App() {
   const { user, loading, signInWithPassword, signOut } = useAuth();
   const { albums, activeAlbumId, setActiveAlbumId, createAlbum, joinAlbum } = useAlbums();
-  const { photos, updateLocation } = usePhotos(activeAlbumId);
+  const { photos, unplaced, updateLocation } = usePhotos(activeAlbumId);
   const [modal, setModal] = useState<'create' | 'join' | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<Photo[] | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
+  const [queueOpen, setQueueOpen] = useState(false);
 
   const handleMapReady = useCallback(() => {
     // Later tasks (city themes, HUD) attach layers here.
@@ -38,6 +42,15 @@ function App() {
   return (
     <div>
       <MapView photos={photos} onMapReady={handleMapReady} onOpenCluster={handleOpenCluster} />
+
+      <HudLayer>
+        <HudButton
+          icon="📷"
+          count={unplaced.length}
+          label="Foto da posizionare"
+          onClick={() => setQueueOpen(true)}
+        />
+      </HudLayer>
 
       <header style={{ position: 'relative', zIndex: 1 }}>
         <span>Benvenuto, {user.email}</span>
@@ -73,6 +86,17 @@ function App() {
           photos={galleryPhotos}
           onClose={() => setGalleryPhotos(null)}
           onEditLocation={handleEditLocation}
+        />
+      )}
+
+      {queueOpen && (
+        <UnplacedQueuePanel
+          photos={unplaced}
+          onSelect={(photo) => {
+            setQueueOpen(false);
+            setEditingPhoto(photo);
+          }}
+          onClose={() => setQueueOpen(false)}
         />
       )}
 
