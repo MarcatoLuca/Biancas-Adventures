@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import albumsRouter from './routes/albums';
 import photosRouter from './routes/photos';
 import aiSuggestRoutes from './routes/aiSuggest';
+import cityThemeRoutes from './routes/cityTheme';
 
 export interface Env {
   SUPABASE_URL: string;
@@ -18,5 +19,6 @@ app.get('/health', (c) => c.json({ ok: true }));
 app.route('/albums', albumsRouter);
 app.route('/albums/:albumId/photos', photosRouter);
 app.route('/', aiSuggestRoutes);
+app.route('/', cityThemeRoutes);
 
 export default app;
