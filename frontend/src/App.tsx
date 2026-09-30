@@ -6,7 +6,8 @@ import { AlbumSwitcher } from './albums/AlbumSwitcher';
 import { CreateAlbumModal } from './albums/CreateAlbumModal';
 import { JoinAlbumModal } from './albums/JoinAlbumModal';
 import { MapView } from './map/MapView';
-import { usePhotos } from './photos/usePhotos';
+import { usePhotos, type Photo } from './photos/usePhotos';
+import { PhotoGalleryPanel } from './photos/PhotoGalleryPanel';
 import type { Cluster } from './map/useClusteredPhotos';
 import './App.css';
 
@@ -15,14 +16,19 @@ function App() {
   const { albums, activeAlbumId, setActiveAlbumId, createAlbum, joinAlbum } = useAlbums();
   const { photos } = usePhotos(activeAlbumId);
   const [modal, setModal] = useState<'create' | 'join' | null>(null);
+  const [galleryPhotos, setGalleryPhotos] = useState<Photo[] | null>(null);
 
   const handleMapReady = useCallback(() => {
     // Later tasks (city themes, HUD) attach layers here.
   }, []);
 
   const handleOpenCluster = useCallback((cluster: Cluster) => {
-    // Task 11 opens the gallery panel with cluster.photos.
-    void cluster;
+    setGalleryPhotos(cluster.photos);
+  }, []);
+
+  const handleEditLocation = useCallback((photo: Photo) => {
+    // Task 12 wires this to the manual location picker.
+    void photo;
   }, []);
 
   if (loading) return <p>Caricamento...</p>;
@@ -60,6 +66,14 @@ function App() {
           />
         )}
       </div>
+
+      {galleryPhotos && (
+        <PhotoGalleryPanel
+          photos={galleryPhotos}
+          onClose={() => setGalleryPhotos(null)}
+          onEditLocation={handleEditLocation}
+        />
+      )}
     </div>
   );
 }
