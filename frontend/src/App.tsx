@@ -6,15 +6,23 @@ import { AlbumSwitcher } from './albums/AlbumSwitcher';
 import { CreateAlbumModal } from './albums/CreateAlbumModal';
 import { JoinAlbumModal } from './albums/JoinAlbumModal';
 import { MapView } from './map/MapView';
+import { usePhotos } from './photos/usePhotos';
+import type { Cluster } from './map/useClusteredPhotos';
 import './App.css';
 
 function App() {
   const { user, loading, signInWithPassword, signOut } = useAuth();
   const { albums, activeAlbumId, setActiveAlbumId, createAlbum, joinAlbum } = useAlbums();
+  const { photos } = usePhotos(activeAlbumId);
   const [modal, setModal] = useState<'create' | 'join' | null>(null);
 
   const handleMapReady = useCallback(() => {
-    // Later tasks (clustering, city themes, HUD) attach layers/markers here.
+    // Later tasks (city themes, HUD) attach layers here.
+  }, []);
+
+  const handleOpenCluster = useCallback((cluster: Cluster) => {
+    // Task 11 opens the gallery panel with cluster.photos.
+    void cluster;
   }, []);
 
   if (loading) return <p>Caricamento...</p>;
@@ -22,7 +30,7 @@ function App() {
 
   return (
     <div>
-      <MapView onMapReady={handleMapReady} />
+      <MapView photos={photos} onMapReady={handleMapReady} onOpenCluster={handleOpenCluster} />
 
       <header style={{ position: 'relative', zIndex: 1 }}>
         <span>Benvenuto, {user.email}</span>
