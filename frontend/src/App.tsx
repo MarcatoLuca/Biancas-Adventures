@@ -8,15 +8,17 @@ import { JoinAlbumModal } from './albums/JoinAlbumModal';
 import { MapView } from './map/MapView';
 import { usePhotos, type Photo } from './photos/usePhotos';
 import { PhotoGalleryPanel } from './photos/PhotoGalleryPanel';
+import { LocationPickerMap } from './photos/LocationPickerMap';
 import type { Cluster } from './map/useClusteredPhotos';
 import './App.css';
 
 function App() {
   const { user, loading, signInWithPassword, signOut } = useAuth();
   const { albums, activeAlbumId, setActiveAlbumId, createAlbum, joinAlbum } = useAlbums();
-  const { photos } = usePhotos(activeAlbumId);
+  const { photos, updateLocation } = usePhotos(activeAlbumId);
   const [modal, setModal] = useState<'create' | 'join' | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<Photo[] | null>(null);
+  const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
 
   const handleMapReady = useCallback(() => {
     // Later tasks (city themes, HUD) attach layers here.
@@ -27,8 +29,7 @@ function App() {
   }, []);
 
   const handleEditLocation = useCallback((photo: Photo) => {
-    // Task 12 wires this to the manual location picker.
-    void photo;
+    setEditingPhoto(photo);
   }, []);
 
   if (loading) return <p>Caricamento...</p>;
@@ -72,6 +73,18 @@ function App() {
           photos={galleryPhotos}
           onClose={() => setGalleryPhotos(null)}
           onEditLocation={handleEditLocation}
+        />
+      )}
+
+      {editingPhoto && (
+        <LocationPickerMap
+          initialLat={editingPhoto.latitude}
+          initialLng={editingPhoto.longitude}
+          onCancel={() => setEditingPhoto(null)}
+          onConfirm={async (lat, lng) => {
+            await updateLocation(editingPhoto.photoGuid, lat, lng, editingPhoto.locationLabel ?? undefined);
+            setEditingPhoto(null);
+          }}
         />
       )}
     </div>

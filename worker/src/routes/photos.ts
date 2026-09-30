@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { requireUser } from '../lib/auth';
 import { fetchSharedAlbum } from '../lib/icloud';
+import { reverseGeocode } from '../lib/nominatim';
 import type { Env } from '../index';
 
 const photosRouter = new Hono<{ Bindings: Env }>();
@@ -56,14 +57,16 @@ photosRouter.patch('/:photoGuid/location', async (c) => {
   const { userId, supabase } = await requireUser(c);
   const albumId = c.req.param('albumId');
   const photoGuid = c.req.param('photoGuid');
-  const body = await c.req.json<{ latitude: number; longitude: number; locationLabel: string }>();
+  const body = await c.req.json<{ latitude: number; longitude: number; locationLabel?: string }>();
+
+  const locationLabel = body.locationLabel ?? (await reverseGeocode(body.latitude, body.longitude));
 
   const { error } = await supabase
     .from('photos')
     .update({
       latitude: body.latitude,
       longitude: body.longitude,
-      location_label: body.locationLabel,
+      location_label: locationLabel,
       location_source: 'manual',
       updated_by: userId,
       updated_at: new Date().toISOString(),

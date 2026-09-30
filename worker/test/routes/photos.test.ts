@@ -4,8 +4,10 @@ import photosRouter from '../../src/routes/photos';
 
 vi.mock('../../src/lib/auth', () => ({ requireUser: vi.fn() }));
 vi.mock('../../src/lib/icloud', () => ({ fetchSharedAlbum: vi.fn() }));
+vi.mock('../../src/lib/nominatim', () => ({ reverseGeocode: vi.fn() }));
 import { requireUser } from '../../src/lib/auth';
 import { fetchSharedAlbum } from '../../src/lib/icloud';
+import { reverseGeocode } from '../../src/lib/nominatim';
 
 function fakeSupabase(
   overrides: {
@@ -118,5 +120,24 @@ describe('photos routes', () => {
       updated_by: 'user-1',
     });
     expect(typeof supabase._updates[0].updated_at).toBe('string');
+    expect(reverseGeocode).not.toHaveBeenCalled();
+  });
+
+  it('reverse-geocodes the location when the caller omits locationLabel', async () => {
+    const supabase = fakeSupabase();
+    (requireUser as any).mockResolvedValue({ userId: 'user-1', supabase });
+    (reverseGeocode as any).mockResolvedValue('Roma, Italia');
+
+    const app = new Hono();
+    app.route('/albums/:albumId/photos', photosRouter);
+    const res = await app.request('/albums/album-1/photos/g1/location', {
+      method: 'PATCH',
+      body: JSON.stringify({ latitude: 41.9, longitude: 12.5 }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    expect(res.status).toBe(200);
+    expect(reverseGeocode).toHaveBeenCalledWith(41.9, 12.5);
+    expect(supabase._updates[0]).toMatchObject({ location_label: 'Roma, Italia' });
   });
 });

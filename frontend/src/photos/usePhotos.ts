@@ -66,11 +66,11 @@ export function usePhotos(albumId: string | null) {
     reload();
   }, [reload]);
 
-  async function updateLocation(photoGuid: string, latitude: number, longitude: number, locationLabel: string) {
+  async function updateLocation(photoGuid: string, latitude: number, longitude: number, locationLabel?: string) {
     if (!albumId) return;
     await request(`/albums/${albumId}/photos/${photoGuid}/location`, {
       method: 'PATCH',
-      body: JSON.stringify({ latitude, longitude, locationLabel }),
+      body: JSON.stringify({ latitude, longitude, ...(locationLabel ? { locationLabel } : {}) }),
     });
     await reload();
   }
