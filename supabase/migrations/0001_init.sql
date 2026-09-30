@@ -158,3 +158,39 @@ $$;
 
 grant execute on function join_album_via_invite(text) to authenticated;
 grant execute on function is_album_member(uuid) to authenticated;
+
+create or replace function respond_to_ai_suggestion(
+  p_album_id uuid,
+  p_photo_guid text,
+  p_action text
+) returns table (status suggestion_status) language plpgsql security definer as $$
+declare
+  v_suggestion ai_suggestions;
+begin
+  if p_action not in ('accept', 'reject') then
+    raise exception 'invalid_action';
+  end if;
+
+  update ai_suggestions
+  set status = case when p_action = 'accept' then 'accepted' else 'rejected' end
+  where album_id = p_album_id and photo_guid = p_photo_guid and status = 'pending'
+  returning * into v_suggestion;
+
+  if v_suggestion is null then
+    raise exception 'suggestion_already_resolved';
+  end if;
+
+  if p_action = 'accept' then
+    update photos
+    set latitude = v_suggestion.suggested_lat,
+        longitude = v_suggestion.suggested_lng,
+        location_label = v_suggestion.suggested_label,
+        location_source = 'ai_accepted'
+    where album_id = v_suggestion.album_id and photo_guid = v_suggestion.photo_guid;
+  end if;
+
+  return query select v_suggestion.status;
+end;
+$$;
+
+grant execute on function respond_to_ai_suggestion(uuid, text, text) to authenticated;
