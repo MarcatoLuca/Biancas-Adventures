@@ -86,6 +86,9 @@ function App() {
           photos={galleryPhotos}
           onClose={() => setGalleryPhotos(null)}
           onEditLocation={handleEditLocation}
+          onLocationConfirmed={async (photo, lat, lng, label) => {
+            await updateLocation(photo.photoGuid, lat, lng, label);
+          }}
         />
       )}
 

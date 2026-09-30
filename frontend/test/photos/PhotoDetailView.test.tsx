@@ -1,5 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('../../src/lib/workerApi', () => ({ request: vi.fn() }));
+
+import { request } from '../../src/lib/workerApi';
 import { PhotoDetailView } from '../../src/photos/PhotoDetailView';
 import type { Photo } from '../../src/photos/usePhotos';
 
@@ -47,5 +51,25 @@ describe('PhotoDetailView', () => {
     render(<PhotoDetailView photo={photo} onEditLocation={onEditLocation} />);
     fireEvent.click(screen.getByRole('button', { name: /modifica posizione/i }));
     expect(onEditLocation).toHaveBeenCalledWith(photo);
+  });
+
+  it('shows the AI suggestion banner when the photo has no coordinates', async () => {
+    (request as any).mockResolvedValueOnce({
+      suggestion: { suggested_label: 'Napoli, Italia', reasoning: 'x', suggested_lat: 40.85, suggested_lng: 14.27 },
+    });
+    render(
+      <PhotoDetailView
+        photo={makePhoto({ latitude: null, longitude: null })}
+        onEditLocation={vi.fn()}
+        onLocationConfirmed={vi.fn()}
+      />
+    );
+    await waitFor(() => expect(screen.getByText(/suggerimento ai/i)).toBeInTheDocument());
+  });
+
+  it('hides the AI suggestion banner when the photo already has coordinates', () => {
+    render(<PhotoDetailView photo={makePhoto({})} onEditLocation={vi.fn()} onLocationConfirmed={vi.fn()} />);
+    expect(screen.queryByText(/suggerimento ai/i)).toBeNull();
+    expect(request).not.toHaveBeenCalled();
   });
 });

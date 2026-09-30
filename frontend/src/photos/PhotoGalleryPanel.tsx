@@ -7,9 +7,10 @@ interface PhotoGalleryPanelProps {
   photos: Photo[];
   onClose: () => void;
   onEditLocation: (photo: Photo) => void;
+  onLocationConfirmed?: (photo: Photo, lat: number, lng: number, label: string) => void;
 }
 
-export function PhotoGalleryPanel({ photos, onClose, onEditLocation }: PhotoGalleryPanelProps) {
+export function PhotoGalleryPanel({ photos, onClose, onEditLocation, onLocationConfirmed }: PhotoGalleryPanelProps) {
   const [selected, setSelected] = useState<Photo | null>(null);
 
   return (
@@ -23,7 +24,11 @@ export function PhotoGalleryPanel({ photos, onClose, onEditLocation }: PhotoGall
       >
         <button onClick={onClose}>Chiudi</button>
         {selected ? (
-          <PhotoDetailView photo={selected} onEditLocation={onEditLocation} />
+          <PhotoDetailView
+            photo={selected}
+            onEditLocation={onEditLocation}
+            onLocationConfirmed={(lat, lng, label) => onLocationConfirmed?.(selected, lat, lng, label)}
+          />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
             {photos.map((photo) => (

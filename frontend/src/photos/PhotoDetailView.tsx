@@ -1,11 +1,13 @@
 import type { Photo } from './usePhotos';
+import { AiSuggestionBanner } from './AiSuggestionBanner';
 
 interface PhotoDetailViewProps {
   photo: Photo;
   onEditLocation: (photo: Photo) => void;
+  onLocationConfirmed?: (lat: number, lng: number, label: string) => void;
 }
 
-export function PhotoDetailView({ photo, onEditLocation }: PhotoDetailViewProps) {
+export function PhotoDetailView({ photo, onEditLocation, onLocationConfirmed }: PhotoDetailViewProps) {
   return (
     <div>
       {photo.fullUrl ? (
@@ -22,6 +24,13 @@ export function PhotoDetailView({ photo, onEditLocation }: PhotoDetailViewProps)
       <p>{photo.caption}</p>
       <p>{photo.locationLabel ?? 'Posizione non impostata'}</p>
       <button onClick={() => onEditLocation(photo)}>Modifica posizione</button>
+      {photo.latitude === null && (
+        <AiSuggestionBanner
+          albumId={photo.albumId}
+          photoGuid={photo.photoGuid}
+          onAccepted={(lat, lng, label) => onLocationConfirmed?.(lat, lng, label)}
+        />
+      )}
     </div>
   );
 }
