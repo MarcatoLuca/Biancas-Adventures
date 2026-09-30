@@ -9,21 +9,32 @@ interface PhotoDetailViewProps {
 
 export function PhotoDetailView({ photo, onEditLocation, onLocationConfirmed }: PhotoDetailViewProps) {
   return (
-    <div>
+    <div style={{ padding: '0 16px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
       {photo.fullUrl ? (
-        <img src={photo.fullUrl} alt={photo.caption || 'Foto'} style={{ maxWidth: '100%' }} />
+        <img
+          src={photo.fullUrl}
+          alt={photo.caption || 'Foto'}
+          style={{ maxWidth: '100%', borderRadius: 20, border: '4px solid white', boxShadow: '0 8px 24px rgba(58,46,57,0.16)' }}
+        />
       ) : photo.mediaAssetType === 'video' ? (
-        <div role="img" aria-label="Video non visualizzabile in anteprima">
-          Video non visualizzabile in anteprima
+        <div role="img" aria-label="Video non visualizzabile in anteprima" className="card">
+          🎬 Video non visualizzabile in anteprima
         </div>
       ) : (
-        <div role="img" aria-label="Anteprima non disponibile">
-          Anteprima non disponibile
+        <div role="img" aria-label="Anteprima non disponibile" className="card">
+          🖼️ Anteprima non disponibile
         </div>
       )}
-      <p>{photo.caption}</p>
-      <p>{photo.locationLabel ?? 'Posizione non impostata'}</p>
-      <button onClick={() => onEditLocation(photo)}>Modifica posizione</button>
+      <p style={{ fontWeight: 700 }}>{photo.caption}</p>
+      <p>
+        📍{' '}
+        <span style={{ color: photo.locationLabel ? 'var(--color-grass-dark)' : 'var(--color-ink-muted)' }}>
+          {photo.locationLabel ?? 'Posizione non impostata'}
+        </span>
+      </p>
+      <button className="btn btn-secondary" onClick={() => onEditLocation(photo)} style={{ alignSelf: 'flex-start' }}>
+        📌 Modifica posizione
+      </button>
       {photo.latitude === null && (
         <AiSuggestionBanner
           albumId={photo.albumId}

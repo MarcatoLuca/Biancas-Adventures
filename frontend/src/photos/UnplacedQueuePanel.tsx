@@ -8,16 +8,25 @@ interface UnplacedQueuePanelProps {
 
 export function UnplacedQueuePanel({ photos, onSelect, onClose }: UnplacedQueuePanelProps) {
   return (
-    <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 320, background: 'white', overflow: 'auto' }}>
-      <button onClick={onClose}>Chiudi</button>
-      <h2>Da posizionare</h2>
+    <div className="panel-sheet" style={{ top: 0, right: 0, bottom: 0, left: 'auto', width: 320 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ color: 'var(--color-sky-dark)' }}>🧭 Da posizionare</h2>
+        <button className="btn btn-ghost" onClick={onClose}>✖️</button>
+      </div>
       {photos.length === 0 ? (
-        <p>Tutte le foto sono posizionate! 🎉</p>
+        <p style={{ color: 'var(--color-grass-dark)', fontWeight: 700 }}>Tutte le foto sono posizionate! 🎉</p>
       ) : (
-        <ul>
+        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {photos.map((photo) => (
             <li key={photo.photoGuid}>
-              <button onClick={() => onSelect(photo)}>{photo.caption || `Foto ${photo.photoGuid}`}</button>
+              <button
+                className="btn"
+                style={{ width: '100%', background: 'var(--color-sun)', color: 'var(--color-ink)' }}
+                onClick={() => onSelect(photo)}
+              >
+                <span aria-hidden="true">📷 </span>
+                {photo.caption || `Foto ${photo.photoGuid}`}
+              </button>
             </li>
           ))}
         </ul>

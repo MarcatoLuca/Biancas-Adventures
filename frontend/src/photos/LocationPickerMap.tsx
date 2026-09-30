@@ -44,10 +44,27 @@ export function LocationPickerMap({ initialLat, initialLng, onConfirm, onCancel 
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
-      <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 12 }}>
-        <button onClick={onCancel}>Annulla</button>
-        <button disabled={!picked} onClick={() => picked && onConfirm(picked[0], picked[1])}>
-          Conferma posizione
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 16,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 12,
+        }}
+      >
+        <button className="btn btn-ghost" style={{ background: 'white' }} onClick={onCancel}>
+          Annulla
+        </button>
+        <button
+          className="btn btn-success"
+          disabled={!picked}
+          style={{ opacity: picked ? 1 : 0.5 }}
+          onClick={() => picked && onConfirm(picked[0], picked[1])}
+        >
+          📍 Conferma posizione
         </button>
       </div>
     </div>

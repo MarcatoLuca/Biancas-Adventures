@@ -26,24 +26,22 @@ export function AlbumMarker({ cluster, onOpen }: AlbumMarkerProps) {
             width: 56,
             height: 56,
             objectFit: 'cover',
-            borderRadius: 8,
-            border: '3px solid white',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            borderRadius: 14,
+            border: '4px solid white',
+            boxShadow: '0 4px 0 rgba(0,0,0,0.15), 0 6px 14px rgba(0,0,0,0.18)',
             transform: `rotate(${i === 0 ? -8 : 8}deg) translate(${i * 10}px, ${i * 6}px)`,
           }}
         />
       ))}
       {cluster.isCluster && (
         <span
+          className="badge"
           style={{
             position: 'absolute',
-            bottom: -4,
-            right: -4,
-            background: '#2b5fad',
-            color: 'white',
-            borderRadius: 999,
-            padding: '2px 6px',
-            fontSize: 12,
+            bottom: -6,
+            right: -6,
+            background: 'var(--color-coral)',
+            fontSize: 13,
           }}
         >
           {cluster.photos.length}

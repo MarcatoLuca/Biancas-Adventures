@@ -38,7 +38,7 @@ function App() {
     setEditingPhoto(photo);
   }, []);
 
-  if (loading) return <p>Caricamento...</p>;
+  if (loading) return <p className="app-loading">Caricamento...</p>;
   if (!user) return <LoginScreen onSubmit={signInWithPassword} />;
 
   return (
@@ -54,12 +54,13 @@ function App() {
         />
       </HudLayer>
 
-      <header style={{ position: 'relative', zIndex: 1 }}>
-        <span>Benvenuto, {user.email}</span>
-        <button type="button" onClick={signOut}>Esci</button>
+      <header className="app-header" style={{ position: 'relative', zIndex: 1 }}>
+        <h1 className="app-title">🗺️ Bianca's Adventures</h1>
+        <span className="app-welcome">Ciao, {user.email}</span>
+        <button type="button" className="btn btn-ghost" onClick={signOut}>Esci</button>
       </header>
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px' }}>
         <AlbumSwitcher
           albums={albums}
           activeAlbumId={activeAlbumId}
@@ -67,8 +68,12 @@ function App() {
           onOpenSettings={setSettingsAlbum}
         />
 
-        <button type="button" onClick={() => setModal('create')}>Crea album</button>
-        <button type="button" onClick={() => setModal('join')}>Unisciti con codice</button>
+        <button type="button" className="btn btn-primary" onClick={() => setModal('create')}>
+          ➕ Crea album
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={() => setModal('join')}>
+          🔑 Unisciti con codice
+        </button>
 
         {modal === 'create' && (
           <CreateAlbumModal

@@ -18,24 +18,23 @@ export function HudButton({ icon, count, onClick, label }: HudButtonProps) {
         position: 'relative',
         width: 56,
         height: 56,
-        borderRadius: 16,
-        border: 'none',
-        background: 'rgba(20, 20, 30, 0.75)',
+        borderRadius: 18,
+        border: '3px solid white',
+        background: 'var(--color-coral)',
         color: 'white',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.35)',
+        boxShadow: '0 4px 0 rgba(0,0,0,0.15), 0 6px 14px rgba(0,0,0,0.18)',
+        fontSize: 22,
       }}
     >
       {icon}
       {!!count && (
         <span
+          className="badge"
           style={{
             position: 'absolute',
-            top: -6,
-            right: -6,
-            background: '#e0533d',
-            borderRadius: 999,
-            padding: '2px 6px',
-            fontSize: 12,
+            top: -8,
+            right: -8,
+            background: 'var(--color-sun-dark)',
           }}
         >
           {count}

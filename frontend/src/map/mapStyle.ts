@@ -13,7 +13,7 @@ export function buildMapStyle(): StyleSpecification {
       {
         id: 'background',
         type: 'background',
-        paint: { 'background-color': '#bfe6ff' },
+        paint: { 'background-color': '#7fd4ff' },
       },
       {
         id: 'landcover-forest',
@@ -21,7 +21,7 @@ export function buildMapStyle(): StyleSpecification {
         source: 'openfreemap',
         'source-layer': 'landcover',
         filter: ['==', ['get', 'class'], 'wood'],
-        paint: { 'fill-color': '#3f8f4f' },
+        paint: { 'fill-color': '#3fb26a' },
       },
       {
         id: 'landuse-sand',
@@ -29,7 +29,7 @@ export function buildMapStyle(): StyleSpecification {
         source: 'openfreemap',
         'source-layer': 'landuse',
         filter: ['==', ['get', 'class'], 'sand'],
-        paint: { 'fill-color': '#f4d35e' },
+        paint: { 'fill-color': '#ffe08a' },
       },
       {
         id: 'land',
@@ -37,21 +37,21 @@ export function buildMapStyle(): StyleSpecification {
         source: 'openfreemap',
         'source-layer': 'landcover',
         filter: ['==', ['get', 'class'], 'grass'],
-        paint: { 'fill-color': '#8fce6b' },
+        paint: { 'fill-color': '#7de08a' },
       },
       {
         id: 'water-fill',
         type: 'fill',
         source: 'openfreemap',
         'source-layer': 'water',
-        paint: { 'fill-color': '#4aa8d8' },
+        paint: { 'fill-color': '#3aa6ff' },
       },
       {
         id: 'building',
         type: 'fill',
         source: 'openfreemap',
         'source-layer': 'building',
-        paint: { 'fill-color': '#d9a679', 'fill-outline-color': '#8a5a35' },
+        paint: { 'fill-color': '#ffcf8a', 'fill-outline-color': '#e8944a' },
       },
     ],
   };

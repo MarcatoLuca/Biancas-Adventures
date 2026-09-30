@@ -30,22 +30,28 @@ export function AlbumSettingsScreen({ album, onClose }: AlbumSettingsScreenProps
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'white' }}>
-      <button onClick={onClose}>Chiudi</button>
-      <h2>Impostazioni album</h2>
-      <p>
-        Codice invito: <strong>{inviteCode}</strong>
-      </p>
-      {album.role === 'owner' && (
-        <>
-          <label>
-            Nome album
-            <input value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
-          <button onClick={rename}>Rinomina</button>
-          <button onClick={regenerateInvite}>Rigenera codice</button>
-        </>
-      )}
+    <div className="panel-sheet">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ color: 'var(--color-grape-dark)' }}>⚙️ Impostazioni album</h2>
+        <button className="btn btn-ghost" onClick={onClose}>✖️ Chiudi</button>
+      </div>
+      <div className="card" style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p>
+          Codice invito: <strong className="badge" style={{ background: 'var(--color-sun-dark)' }}>{inviteCode}</strong>
+        </p>
+        {album.role === 'owner' && (
+          <>
+            <label style={{ fontWeight: 700, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              Nome album
+              <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
+            </label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-primary" onClick={rename}>✏️ Rinomina</button>
+              <button className="btn btn-secondary" onClick={regenerateInvite}>🔄 Rigenera codice</button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

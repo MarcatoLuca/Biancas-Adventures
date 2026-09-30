@@ -27,17 +27,23 @@ export function AiSuggestionBanner({ albumId, photoGuid, onAccepted }: AiSuggest
   }
 
   if (conflict) {
-    return <p>Questa proposta è già stata gestita da un altro membro dell'album.</p>;
+    return (
+      <p className="card" style={{ borderColor: 'var(--color-coral)' }}>
+        ⚠️ Questa proposta è già stata gestita da un altro membro dell'album.
+      </p>
+    );
   }
 
   return (
-    <div>
-      <p>
-        Suggerimento AI: <strong>{suggestion.suggested_label}</strong>
+    <div className="card" style={{ borderColor: 'var(--color-grape)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <p style={{ fontFamily: 'var(--font-display)', color: 'var(--color-grape-dark)' }}>
+        🤖 Suggerimento AI: <strong>{suggestion.suggested_label}</strong>
       </p>
-      <p>{suggestion.reasoning}</p>
-      <button onClick={() => handle('accept')}>Accetta</button>
-      <button onClick={() => handle('reject')}>Rifiuta</button>
+      <p style={{ color: 'var(--color-ink-muted)' }}>{suggestion.reasoning}</p>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button className="btn btn-success" onClick={() => handle('accept')}>✅ Accetta</button>
+        <button className="btn btn-ghost" onClick={() => handle('reject')}>❌ Rifiuta</button>
+      </div>
     </div>
   );
 }
