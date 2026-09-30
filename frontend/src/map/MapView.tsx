@@ -5,6 +5,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { buildMapStyle } from './mapStyle';
 import { useClusteredPhotos, type Cluster } from './useClusteredPhotos';
 import { AlbumMarker } from './AlbumMarker';
+import { CityThemeOverlay } from './CityThemeOverlay';
+import { useCityThemes } from './useCityThemes';
 import type { Photo } from '../photos/usePhotos';
 
 interface MapViewProps {
@@ -19,6 +21,7 @@ export function MapView({ photos = [], onMapReady, onOpenCluster }: MapViewProps
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MaplibreMap | null>(null);
   const markersRef = useRef<Map<string, { marker: Marker; root: Root }>>(new Map());
+  const [mapInstance, setMapInstance] = useState<MaplibreMap | null>(null);
   const [viewport, setViewport] = useState<{ zoom: number; bounds: [number, number, number, number] }>({
     zoom: 2,
     bounds: WORLD_BOUNDS,
@@ -44,6 +47,7 @@ export function MapView({ photos = [], onMapReady, onOpenCluster }: MapViewProps
 
     map.on('load', () => {
       syncViewport();
+      setMapInstance(map);
       onMapReady?.(map);
     });
     map.on('moveend', syncViewport);
@@ -57,6 +61,7 @@ export function MapView({ photos = [], onMapReady, onOpenCluster }: MapViewProps
   }, []);
 
   const clusters = useClusteredPhotos(photos, viewport.zoom, viewport.bounds);
+  const themes = useCityThemes(photos);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -96,6 +101,8 @@ export function MapView({ photos = [], onMapReady, onOpenCluster }: MapViewProps
     <div
       ref={containerRef}
       style={{ position: 'fixed', inset: 0, width: '100%', height: '100%' }}
-    />
+    >
+      <CityThemeOverlay map={mapInstance} clusters={clusters} themes={themes} />
+    </div>
   );
 }
