@@ -8,8 +8,8 @@ describe('AlbumSwitcher', () => {
     render(
       <AlbumSwitcher
         albums={[
-          { id: 'a1', name: 'Famiglia', role: 'owner' },
-          { id: 'a2', name: 'Amici', role: 'member' },
+          { id: 'a1', name: 'Famiglia', role: 'owner', inviteCode: 'CODE1', iCloudAlbumUrl: 'https://x' },
+          { id: 'a2', name: 'Amici', role: 'member', inviteCode: 'CODE2', iCloudAlbumUrl: 'https://y' },
         ]}
         activeAlbumId="a1"
         onSelect={onSelect}
@@ -23,5 +23,27 @@ describe('AlbumSwitcher', () => {
   it('renders a message when there are no albums yet', () => {
     render(<AlbumSwitcher albums={[]} activeAlbumId={null} onSelect={vi.fn()} />);
     expect(screen.getByText(/nessun album/i)).toBeInTheDocument();
+  });
+
+  it('shows a settings button next to the active album and calls onOpenSettings with it', () => {
+    const onOpenSettings = vi.fn();
+    render(
+      <AlbumSwitcher
+        albums={[
+          { id: 'a1', name: 'Famiglia', role: 'owner', inviteCode: 'CODE1', iCloudAlbumUrl: 'https://x' },
+          { id: 'a2', name: 'Amici', role: 'member', inviteCode: 'CODE2', iCloudAlbumUrl: 'https://y' },
+        ]}
+        activeAlbumId="a1"
+        onSelect={vi.fn()}
+        onOpenSettings={onOpenSettings}
+      />
+    );
+
+    const settingsButtons = screen.getAllByRole('button', { name: /impostazioni/i });
+    expect(settingsButtons).toHaveLength(1);
+    fireEvent.click(settingsButtons[0]);
+    expect(onOpenSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'a1', name: 'Famiglia', role: 'owner' })
+    );
   });
 });

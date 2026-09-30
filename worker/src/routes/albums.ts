@@ -85,7 +85,7 @@ albumsRouter.get('/', async (c) => {
   const { userId, supabase } = await requireUser(c);
   const { data, error } = await supabase
     .from('album_members')
-    .select('album_id, role, albums(id, name)')
+    .select('album_id, role, albums(id, name, invite_code, icloud_album_token)')
     .eq('user_id', userId);
 
   if (error) {
@@ -114,6 +114,24 @@ albumsRouter.post('/:id/invite/regenerate', async (c) => {
   }
 
   return c.json({ inviteCode: data.invite_code });
+});
+
+albumsRouter.patch('/:id', async (c) => {
+  const { supabase } = await requireUser(c);
+  const albumId = c.req.param('id');
+  const { name } = await c.req.json<{ name: string }>();
+
+  const { data, error } = await supabase
+    .from('albums')
+    .update({ name })
+    .eq('id', albumId)
+    .select()
+    .single();
+
+  if (error || !data) {
+    return c.json({ error: 'album_not_found_or_not_owner' }, 404);
+  }
+  return c.json({ album: data });
 });
 
 export default albumsRouter;

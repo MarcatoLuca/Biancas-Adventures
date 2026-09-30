@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react';
 import { useAuth } from './auth/useAuth';
 import { LoginScreen } from './auth/LoginScreen';
 import { useAlbums } from './albums/useAlbums';
-import { AlbumSwitcher } from './albums/AlbumSwitcher';
+import { AlbumSwitcher, type Album } from './albums/AlbumSwitcher';
+import { AlbumSettingsScreen } from './settings/AlbumSettingsScreen';
 import { CreateAlbumModal } from './albums/CreateAlbumModal';
 import { JoinAlbumModal } from './albums/JoinAlbumModal';
 import { MapView } from './map/MapView';
@@ -23,6 +24,7 @@ function App() {
   const [galleryPhotos, setGalleryPhotos] = useState<Photo[] | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
   const [queueOpen, setQueueOpen] = useState(false);
+  const [settingsAlbum, setSettingsAlbum] = useState<Album | null>(null);
 
   const handleMapReady = useCallback(() => {
     // Later tasks (city themes, HUD) attach layers here.
@@ -58,7 +60,12 @@ function App() {
       </header>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <AlbumSwitcher albums={albums} activeAlbumId={activeAlbumId} onSelect={setActiveAlbumId} />
+        <AlbumSwitcher
+          albums={albums}
+          activeAlbumId={activeAlbumId}
+          onSelect={setActiveAlbumId}
+          onOpenSettings={setSettingsAlbum}
+        />
 
         <button type="button" onClick={() => setModal('create')}>Crea album</button>
         <button type="button" onClick={() => setModal('join')}>Unisciti con codice</button>
@@ -113,6 +120,9 @@ function App() {
             setEditingPhoto(null);
           }}
         />
+      )}
+      {settingsAlbum && (
+        <AlbumSettingsScreen album={settingsAlbum} onClose={() => setSettingsAlbum(null)} />
       )}
     </div>
   );

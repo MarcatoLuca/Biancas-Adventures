@@ -14,6 +14,7 @@ function fakeSupabase(
     rpcResult?: { data: string | null; error: { message: string } | null };
     memberInsertResult?: { error: { message: string } | null };
     regenerateResult?: { data: { invite_code: string } | null; error: { message: string } | null };
+    renameResult?: { data: { id: string; name: string } | null; error: { message: string } | null };
   } = {}
 ) {
   const calls = {
@@ -37,10 +38,14 @@ function fakeSupabase(
           }),
           update: vi.fn((payload: any) => {
             calls.albumUpdate.push(payload);
+            const result =
+              'name' in payload
+                ? overrides.renameResult ?? { data: { id: 'album-1', name: payload.name }, error: null }
+                : overrides.regenerateResult ?? { data: { invite_code: 'NEWCODE1' }, error: null };
             return {
               eq: vi.fn(() => ({
                 select: vi.fn(() => ({
-                  single: vi.fn(async () => overrides.regenerateResult ?? { data: { invite_code: 'NEWCODE1' }, error: null }),
+                  single: vi.fn(async () => result),
                 })),
               })),
             };
@@ -182,6 +187,43 @@ describe('albums routes', () => {
     app.route('/albums', albumsRouter);
     const res = await app.request('/albums/album-1/invite/regenerate', {
       method: 'POST',
+    });
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: 'album_not_found_or_not_owner' });
+  });
+
+  it('renames the album for the owner', async () => {
+    const supabase = fakeSupabase({
+      renameResult: { data: { id: 'album-1', name: 'New name' }, error: null },
+    });
+    (requireUser as any).mockResolvedValue({ userId: 'owner-1', supabase });
+
+    const app = new Hono();
+    app.route('/albums', albumsRouter);
+    const res = await app.request('/albums/album-1', {
+      method: 'PATCH',
+      body: JSON.stringify({ name: 'New name' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ album: { id: 'album-1', name: 'New name' } });
+    expect(supabase._calls.albumUpdate[0]).toEqual({ name: 'New name' });
+  });
+
+  it('returns 404 when a non-owner tries to rename the album', async () => {
+    const supabase = fakeSupabase({
+      renameResult: { data: null, error: null },
+    });
+    (requireUser as any).mockResolvedValue({ userId: 'member-1', supabase });
+
+    const app = new Hono();
+    app.route('/albums', albumsRouter);
+    const res = await app.request('/albums/album-1', {
+      method: 'PATCH',
+      body: JSON.stringify({ name: 'New name' }),
+      headers: { 'Content-Type': 'application/json' },
     });
 
     expect(res.status).toBe(404);

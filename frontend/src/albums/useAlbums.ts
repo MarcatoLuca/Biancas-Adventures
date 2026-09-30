@@ -7,13 +7,19 @@ export function useAlbums() {
   const [activeAlbumId, setActiveAlbumId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    const res = await request<{ albums: { album_id: string; role: 'owner' | 'member'; albums: { id: string; name: string } }[] }>(
-      '/albums'
-    );
+    const res = await request<{
+      albums: {
+        album_id: string;
+        role: 'owner' | 'member';
+        albums: { id: string; name: string; invite_code: string; icloud_album_token: string };
+      }[];
+    }>('/albums');
     const mapped = res.albums.map((row) => ({
       id: row.albums.id,
       name: row.albums.name,
       role: row.role,
+      inviteCode: row.albums.invite_code,
+      iCloudAlbumUrl: row.albums.icloud_album_token,
     }));
     setAlbums(mapped);
     setActiveAlbumId((current) => current ?? mapped[0]?.id ?? null);
