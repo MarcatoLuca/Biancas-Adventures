@@ -8,7 +8,8 @@ import cityThemeRoutes from './routes/cityTheme';
 export interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
-  SUPABASE_JWT_SECRET: string;
+  SUPABASE_JWT_SECRET?: string;
+  SUPABASE_JWKS_URL?: string;
   GEMINI_API_KEY: string;
 }
 
@@ -20,5 +21,13 @@ app.route('/albums', albumsRouter);
 app.route('/albums/:albumId/photos', photosRouter);
 app.route('/', aiSuggestRoutes);
 app.route('/', cityThemeRoutes);
+
+// Ensure every error response is JSON, never Hono/Workers' default plain-text body,
+// so the frontend's `res.json()` never throws "... is not valid JSON".
+app.onError((err, c) => {
+  const message = err.message ?? 'internal_error';
+  const status = message.startsWith('unauthorized') ? 401 : 500;
+  return c.json({ error: message }, status);
+});
 
 export default app;

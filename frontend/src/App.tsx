@@ -19,7 +19,7 @@ import './App.css';
 function App() {
   const { user, loading, signInWithPassword, signOut } = useAuth();
   const { albums, activeAlbumId, setActiveAlbumId, createAlbum, joinAlbum } = useAlbums();
-  const { photos, unplaced, updateLocation } = usePhotos(activeAlbumId);
+  const { photos, unplaced, error: photosError, updateLocation } = usePhotos(activeAlbumId);
   const [modal, setModal] = useState<'create' | 'join' | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<Photo[] | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
@@ -59,6 +59,24 @@ function App() {
         <span className="app-welcome">Ciao, {user.email}</span>
         <button type="button" className="btn btn-ghost" onClick={signOut}>Esci</button>
       </header>
+
+      {photosError && (
+        <div
+          role="alert"
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            margin: '0 16px 12px',
+            padding: 12,
+            borderRadius: 12,
+            background: 'var(--color-coral-light, #ffd6d6)',
+            color: 'var(--color-coral-dark)',
+            fontWeight: 700,
+          }}
+        >
+          ⚠️ Impossibile sincronizzare le foto dell'album: {photosError}
+        </div>
+      )}
 
       <div style={{ position: 'relative', zIndex: 1, padding: '0 16px' }}>
         <AlbumSwitcher
@@ -107,6 +125,7 @@ function App() {
       {queueOpen && (
         <UnplacedQueuePanel
           photos={unplaced}
+          totalPhotos={photos.length}
           onSelect={(photo) => {
             setQueueOpen(false);
             setEditingPhoto(photo);

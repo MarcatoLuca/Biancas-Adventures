@@ -17,6 +17,11 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    // maplibre-gl ships its own worker bundle; pre-bundling it breaks the
+    // worker URL resolution ("Worker failed to load") in dev mode.
+    exclude: ['maplibre-gl'],
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./test/setupTests.ts'],

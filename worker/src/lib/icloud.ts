@@ -55,11 +55,30 @@ function buildAssetUrl(asset: { url_location?: string; url_path?: string } | und
   return `https://${asset.url_location}${asset.url_path}`;
 }
 
+const BASE_62_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+function base62ToInt(value: string): number {
+  let result = 0;
+  for (const char of value) {
+    result = result * 62 + BASE_62_CHARS.indexOf(char);
+  }
+  return result;
+}
+
+// iCloud shared-album tokens encode which `pNN-sharedstreams.icloud.com` partition
+// serves them: the digit right after the leading letter (2 chars, or 1 if it's "A").
+function partitionHostFromToken(token: string): string {
+  const digits = token[0] === 'A' ? token.substring(1, 2) : token.substring(1, 3);
+  const partition = base62ToInt(digits);
+  const padded = partition < 10 ? `0${partition}` : `${partition}`;
+  return `p${padded}-sharedstreams.icloud.com`;
+}
+
 export async function fetchSharedAlbum(
   token: string,
   fetchImpl: typeof fetch = fetch
 ): Promise<IcloudPhoto[]> {
-  let host = 'www.icloud.com';
+  let host = partitionHostFromToken(token);
 
   try {
     let streamResponse = await postJson(`https://${host}/${token}/sharedstreams/webstream`, { streamCtag: null }, fetchImpl);
