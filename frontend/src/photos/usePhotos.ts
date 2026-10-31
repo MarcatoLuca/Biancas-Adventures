@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { request } from '../lib/workerApi';
 
 export interface Photo {
@@ -43,39 +43,50 @@ function toPhoto(row: RawPhotoRow): Photo {
 }
 
 export function usePhotos(albumId: string | null) {
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [data, setData] = useState<{ albumId: string | null; photos: Photo[] }>({ albumId: null, photos: [] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestId = useRef(0);
 
   const reload = useCallback(async () => {
     if (!albumId) return;
+    const id = ++requestId.current;
     setLoading(true);
     setError(null);
     try {
       const res = await request<{ photos: RawPhotoRow[] }>(`/albums/${albumId}/photos`);
-      setPhotos(res.photos.map(toPhoto));
+      if (id === requestId.current) setData({ albumId, photos: res.photos.map(toPhoto) });
     } catch (err) {
+      if (id !== requestId.current) return;
       setError(err instanceof Error ? err.message : 'unknown_error');
-      setPhotos([]);
+      setData((current) => current.albumId === albumId ? current : { albumId, photos: [] });
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [albumId]);
 
   useEffect(() => {
     reload();
+    return () => { requestId.current++; };
   }, [reload]);
 
   async function updateLocation(photoGuid: string, latitude: number, longitude: number, locationLabel?: string) {
-    if (!albumId) return;
-    await request(`/albums/${albumId}/photos/${photoGuid}/location`, {
+    if (!albumId) throw new Error('album_not_found_or_forbidden');
+    await request(`/albums/${albumId}/photos/${encodeURIComponent(photoGuid)}/location`, {
       method: 'PATCH',
       body: JSON.stringify({ latitude, longitude, ...(locationLabel ? { locationLabel } : {}) }),
+    });
+    setData((current) => current.albumId !== albumId ? current : {
+      ...current,
+      photos: current.photos.map((photo) => photo.photoGuid === photoGuid ? {
+        ...photo, latitude, longitude, locationLabel: locationLabel ?? null,
+      } : photo),
     });
     await reload();
   }
 
+  const photos = data.albumId === albumId ? data.photos : [];
   const unplaced = photos.filter((p) => p.latitude === null || p.longitude === null);
 
-  return { photos, unplaced, loading, error, reload, updateLocation };
+  return { photos, unplaced, loading: !!albumId && (loading || data.albumId !== albumId), error: albumId ? error : null, reload, updateLocation };
 }

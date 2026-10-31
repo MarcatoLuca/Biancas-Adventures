@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react';
+import { Dialog } from '../ui/Dialog';
+import { errorMessage } from '../lib/errorMessage';
 
 interface JoinAlbumModalProps {
   onJoin: (inviteCode: string) => Promise<void>;
@@ -8,38 +10,39 @@ interface JoinAlbumModalProps {
 export function JoinAlbumModal({ onJoin, onClose }: JoinAlbumModalProps) {
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (submitting) return;
+    setError(null);
+    setSubmitting(true);
     try {
-      await onJoin(inviteCode);
+      await onJoin(inviteCode.trim());
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'unknown_error');
+      setError(errorMessage(err));
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <form
-        onSubmit={handleSubmit}
-        className="card"
-        style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 12 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 style={{ color: 'var(--color-sky-dark)' }}>🔑 Unisciti a un album</h2>
-        <label htmlFor="invite-code" style={{ fontWeight: 700 }}>Codice invito</label>
-        <input id="invite-code" className="input" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
-        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-          <button type="submit" className="btn btn-secondary">🤝 Unisciti</button>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Annulla</button>
+    <Dialog title="Unisciti a un album" onClose={onClose} busy={submitting}>
+      <form onSubmit={handleSubmit} className="form-stack" aria-busy={submitting}>
+        <p className="muted">Chiedi il codice invito a chi ha creato l’album.</p>
+        <label htmlFor="invite-code">Codice invito</label>
+        <input id="invite-code" className="input invite-input" required autoCapitalize="characters" spellCheck={false} value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} disabled={submitting} />
+        <div className="button-row">
+          <button type="submit" className="btn btn-secondary" disabled={submitting}>{submitting ? 'Attendi…' : 'Unisciti'}</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={submitting}>Annulla</button>
         </div>
         {error && (
-          <p role="alert" style={{ color: 'var(--color-coral-dark)', fontWeight: 700 }}>
+          <p role="alert" className="notice notice-error">
             {error}
           </p>
         )}
       </form>
-    </div>
+    </Dialog>
   );
 }

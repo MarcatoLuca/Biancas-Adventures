@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react';
+import { Dialog } from '../ui/Dialog';
+import { errorMessage } from '../lib/errorMessage';
 
 interface CreateAlbumModalProps {
   onCreate: (name: string, icloudAlbumUrl: string) => Promise<void>;
@@ -13,39 +15,36 @@ export function CreateAlbumModal({ onCreate, onClose }: CreateAlbumModalProps) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (submitting) return;
     setError(null);
     setSubmitting(true);
     try {
-      await onCreate(name, url);
+      await onCreate(name.trim(), url.trim());
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Errore durante la creazione dell\'album');
+      setError(errorMessage(err));
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <form
-        onSubmit={handleSubmit}
-        className="card"
-        style={{ width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 style={{ color: 'var(--color-coral-dark)' }}>🏝️ Nuovo album</h2>
-        <label htmlFor="album-name" style={{ fontWeight: 700 }}>Nome album</label>
-        <input id="album-name" className="input" value={name} onChange={(e) => setName(e.target.value)} />
-        <label htmlFor="icloud-url" style={{ fontWeight: 700 }}>Link Album Condiviso iCloud</label>
-        <input id="icloud-url" className="input" value={url} onChange={(e) => setUrl(e.target.value)} />
-        {error && <p style={{ color: 'var(--color-coral-dark)', margin: 0 }}>{error}</p>}
-        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+    <Dialog title="Nuovo album" onClose={onClose} busy={submitting}>
+      <form onSubmit={handleSubmit} className="form-stack" aria-busy={submitting}>
+        <p className="muted">Raccogli i vostri ricordi sulla mappa. Le foto restano nel tuo album iCloud.</p>
+        <label htmlFor="album-name">Nome album</label>
+        <input id="album-name" className="input" required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} disabled={submitting} />
+        <label htmlFor="icloud-url">Link Album Condiviso iCloud</label>
+        <input id="icloud-url" className="input" required type="url" aria-describedby="icloud-help" value={url} onChange={(e) => setUrl(e.target.value)} disabled={submitting} placeholder="https://www.icloud.com/sharedalbum/#…" />
+        <p id="icloud-help" className="field-help">In Foto, apri l’album condiviso, attiva “Sito web pubblico” e copia il link.</p>
+        {error && <p role="alert" className="notice notice-error">{error}</p>}
+        <div className="button-row">
           <button type="submit" className="btn btn-primary" disabled={submitting}>
-            {submitting ? '⏳ Creazione...' : '✨ Crea'}
+            {submitting ? 'Creazione…' : 'Crea'}
           </button>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Annulla</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={submitting}>Annulla</button>
         </div>
       </form>
-    </div>
+    </Dialog>
   );
 }

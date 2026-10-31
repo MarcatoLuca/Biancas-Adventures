@@ -6,19 +6,23 @@
 
 :root {
   --color-coral: #ff5a5f;
-  --color-coral-dark: #e23f45;
+  --color-coral-dark: #b92f40;
   --color-sun: #ffc93c;
   --color-sun-dark: #e8a800;
   --color-grass: #4cd787;
-  --color-grass-dark: #2fae68;
+  --color-grass-dark: #246b49;
   --color-sky: #3aa6ff;
-  --color-sky-dark: #1e7fd6;
+  --color-sky-dark: #176397;
   --color-grape: #9b5de5;
   --color-grape-dark: #7a3dc2;
+  --color-grape-light: #f0e5ff;
   --color-cream: #fff8ec;
   --color-sand: #ffe8c2;
   --color-ink: #3a2e39;
   --color-ink-muted: #6b5c68;
+  --color-paper: #ffffff;
+  --color-border: #e2d6c7;
+  --color-border-strong: #988876;
 
   --font-display: 'Fredoka', system-ui, sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;
@@ -35,6 +39,34 @@
 
 * {
   box-sizing: border-box;
+}
+
+@media (forced-colors: none) {
+  * {
+    scrollbar-color: var(--color-grape-dark) var(--color-cream);
+  }
+
+  @supports selector(::-webkit-scrollbar) {
+    * { scrollbar-color: auto; }
+
+    ::-webkit-scrollbar { width: 14px; height: 14px; }
+    ::-webkit-scrollbar-track {
+      background: var(--color-cream);
+      border-radius: 999px;
+      margin-block: 12px;
+    }
+    ::-webkit-scrollbar-thumb {
+      min-height: 44px;
+      min-width: 44px;
+      border: 3px solid var(--color-cream);
+      border-radius: 999px;
+      background: linear-gradient(var(--color-grape), var(--color-grape-dark));
+      background-clip: padding-box;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-grape-dark); background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb:active { background: #5b279b; background-clip: padding-box; }
+    ::-webkit-scrollbar-corner { background: var(--color-cream); }
+  }
 }
 
 body {
@@ -64,4 +96,20 @@ p {
 
 button {
   font-family: var(--font-body);
+}
+
+button, input, video, a { -webkit-tap-highlight-color: transparent; }
+button, input { font: inherit; }
+button, a { touch-action: manipulation; }
+img, video { max-width: 100%; }
+h1, h2, h3 { overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid #5b279b; outline-offset: 4px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+  .btn, .hud-candy, .photo-tile, .album-item, .queue-item { border: 2px solid ButtonText; }
+  .album-item.is-active { border: 3px solid Highlight; }
+  :focus-visible { outline-color: Highlight; }
 }

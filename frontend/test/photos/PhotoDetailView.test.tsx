@@ -53,7 +53,7 @@ describe('PhotoDetailView', () => {
     expect(onEditLocation).toHaveBeenCalledWith(photo);
   });
 
-  it('shows the AI suggestion banner when the photo has no coordinates', async () => {
+  it('does not request Gemini suggestions for unplaced photos', async () => {
     (request as any).mockResolvedValueOnce({
       suggestion: { suggested_label: 'Napoli, Italia', reasoning: 'x', suggested_lat: 40.85, suggested_lng: 14.27 },
     });
@@ -64,7 +64,9 @@ describe('PhotoDetailView', () => {
         onLocationConfirmed={vi.fn()}
       />
     );
-    await waitFor(() => expect(screen.getByText(/suggerimento ai/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: /modifica posizione/i })).toBeInTheDocument());
+    expect(screen.queryByText(/suggerimento ai/i)).not.toBeInTheDocument();
+    expect(request).not.toHaveBeenCalled();
   });
 
   it('hides the AI suggestion banner when the photo already has coordinates', () => {

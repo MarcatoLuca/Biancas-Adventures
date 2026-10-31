@@ -1,4 +1,4 @@
-﻿import { defineConfig } from 'vite';
+﻿import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { pwaManifest } from './src/pwa/manifest.js';
@@ -23,6 +23,7 @@ export default defineConfig({
     exclude: ['maplibre-gl'],
   },
   test: {
+    exclude: ['**/node_modules/**', 'e2e/**'],
     environment: 'jsdom',
     setupFiles: ['./test/setupTests.ts'],
     globals: true,

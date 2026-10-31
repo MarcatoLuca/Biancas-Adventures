@@ -22,6 +22,6 @@ describe('LoginScreen', () => {
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'wrong' } });
     fireEvent.click(screen.getByRole('button', { name: /accedi/i }));
 
-    expect(await screen.findByText(/invalid_credentials/i)).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/email o password non corrette/i);
   });
 });

@@ -14,45 +14,19 @@ interface AlbumSwitcherProps {
 }
 
 export function AlbumSwitcher({ albums, activeAlbumId, onSelect, onOpenSettings }: AlbumSwitcherProps) {
-  if (albums.length === 0) {
-    return (
-      <p style={{ color: 'var(--color-ink-muted)', fontWeight: 700 }}>
-        Nessun album ancora: creane uno o unisciti con un codice invito.
-      </p>
-    );
-  }
+  if (albums.length === 0) return <p className="empty-albums">Nessun album ancora: creane uno o unisciti con un codice invito.</p>;
 
   return (
-    <ul style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: 0, margin: '12px 0', listStyle: 'none' }}>
+    <ul className="album-list" aria-label="I tuoi album">
       {albums.map((album) => {
-        const isActive = album.id === activeAlbumId;
+        const active = album.id === activeAlbumId;
         return (
-          <li key={album.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button
-              type="button"
-              className="btn"
-              aria-pressed={isActive}
-              onClick={() => onSelect(album.id)}
-              style={{
-                background: isActive ? 'var(--color-grape)' : 'var(--color-sand)',
-                color: isActive ? 'white' : 'var(--color-ink)',
-                boxShadow: isActive ? '0 4px 0 rgba(0,0,0,0.15)' : 'none',
-              }}
-            >
-              {isActive ? '📍 ' : ''}
-              {album.name}
+          <li key={album.id} className={active ? 'album-item is-active' : 'album-item'}>
+            <button type="button" className="album-select" aria-pressed={active} onClick={() => onSelect(album.id)}>
+              <span className="album-cover" aria-hidden="true">▧</span>
+              <span className="album-item-name">{album.name}{' '}<small>{album.role === 'owner' ? 'Il tuo album' : 'Album condiviso'}</small></span>
             </button>
-            {onOpenSettings && isActive && (
-              <button
-                type="button"
-                className="btn btn-ghost"
-                aria-label="Impostazioni album"
-                onClick={() => onOpenSettings(album)}
-                style={{ fontSize: 18, padding: '6px 8px' }}
-              >
-                ⚙️
-              </button>
-            )}
+            {onOpenSettings && active && <button type="button" className="btn btn-ghost album-settings" aria-label={`Impostazioni album ${album.name}`} onClick={() => onOpenSettings(album)}><span aria-hidden="true">⚙</span></button>}
           </li>
         );
       })}

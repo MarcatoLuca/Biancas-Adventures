@@ -1,5 +1,5 @@
+import { useState } from 'react';
 import type { Photo } from './usePhotos';
-import { AiSuggestionBanner } from './AiSuggestionBanner';
 
 interface PhotoDetailViewProps {
   photo: Photo;
@@ -7,41 +7,37 @@ interface PhotoDetailViewProps {
   onLocationConfirmed?: (lat: number, lng: number, label: string) => void;
 }
 
-export function PhotoDetailView({ photo, onEditLocation, onLocationConfirmed }: PhotoDetailViewProps) {
+export function PhotoDetailView({ photo, onEditLocation }: PhotoDetailViewProps) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const date = photo.dateCreated ? new Date(photo.dateCreated) : null;
+  const hasCoordinates = photo.latitude !== null && photo.longitude !== null;
+
   return (
-    <div style={{ padding: '0 16px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {photo.fullUrl ? (
-        <img
-          src={photo.fullUrl}
-          alt={photo.caption || 'Foto'}
-          style={{ maxWidth: '100%', borderRadius: 20, border: '4px solid white', boxShadow: '0 8px 24px rgba(58,46,57,0.16)' }}
-        />
-      ) : photo.mediaAssetType === 'video' ? (
-        <div role="img" aria-label="Video non visualizzabile in anteprima" className="card">
-          🎬 Video non visualizzabile in anteprima
-        </div>
-      ) : (
-        <div role="img" aria-label="Anteprima non disponibile" className="card">
-          🖼️ Anteprima non disponibile
-        </div>
-      )}
-      <p style={{ fontWeight: 700 }}>{photo.caption}</p>
-      <p>
-        📍{' '}
-        <span style={{ color: photo.locationLabel ? 'var(--color-grass-dark)' : 'var(--color-ink-muted)' }}>
-          {photo.locationLabel ?? 'Posizione non impostata'}
-        </span>
-      </p>
-      <button className="btn btn-secondary" onClick={() => onEditLocation(photo)} style={{ alignSelf: 'flex-start' }}>
-        📌 Modifica posizione
-      </button>
-      {photo.latitude === null && (
-        <AiSuggestionBanner
-          albumId={photo.albumId}
-          photoGuid={photo.photoGuid}
-          onAccepted={(lat, lng, label) => onLocationConfirmed?.(lat, lng, label)}
-        />
-      )}
-    </div>
+    <article className="photo-detail">
+      <div className="photo-preview">
+        {photo.fullUrl && failedUrl !== photo.fullUrl ? (
+          photo.mediaAssetType === 'video' ? (
+            <video src={photo.fullUrl} controls preload="metadata" aria-label={photo.caption || 'Video dell’album'} onError={() => setFailedUrl(photo.fullUrl)}>
+              Il browser non supporta la riproduzione video.
+            </video>
+          ) : (
+            <img src={photo.fullUrl} alt={photo.caption || 'Foto dell’album senza descrizione'} onError={() => setFailedUrl(photo.fullUrl)} />
+          )
+        ) : (
+          <div role="img" aria-label={photo.mediaAssetType === 'video' ? 'Video non visualizzabile in anteprima' : 'Anteprima non disponibile'} className="media-placeholder">
+            <span aria-hidden="true">{photo.mediaAssetType === 'video' ? '▶' : '▧'}</span>
+            <p>{photo.mediaAssetType === 'video' ? 'Video non visualizzabile in anteprima' : 'Anteprima non disponibile'}</p>
+          </div>
+        )}
+      </div>
+      <div className="photo-info form-stack">
+        <span className="eyebrow">Il tuo ricordo</span>
+        <h3>{photo.caption || 'Un’avventura da ricordare'}</h3>
+        {date && !Number.isNaN(date.getTime()) && <time dateTime={photo.dateCreated!}>{date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>}
+        <p>{photo.locationLabel ?? (hasCoordinates ? 'Posizione sulla mappa' : 'Posizione non impostata')}</p>
+        {hasCoordinates && <p className="field-help">Latitudine {photo.latitude!.toFixed(5)} · Longitudine {photo.longitude!.toFixed(5)}</p>}
+        <button type="button" className="btn btn-secondary" onClick={() => onEditLocation(photo)}>Modifica posizione</button>
+      </div>
+    </article>
   );
 }

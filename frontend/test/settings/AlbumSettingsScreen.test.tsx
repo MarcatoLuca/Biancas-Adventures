@@ -31,7 +31,7 @@ describe('AlbumSettingsScreen', () => {
 
   it('shows the current invite code to every member', () => {
     render(<AlbumSettingsScreen album={memberAlbum} onClose={vi.fn()} />);
-    expect(screen.getByText('ABC123')).toBeInTheDocument();
+    expect(screen.getByLabelText(/codice invito/i)).toHaveValue('ABC123');
   });
 
   it('calls the rename route with the new name', async () => {
@@ -47,5 +47,23 @@ describe('AlbumSettingsScreen', () => {
         body: JSON.stringify({ name: 'New name' }),
       })
     );
+  });
+
+  it('announces a successful rename and updates the album in the parent', async () => {
+    vi.mocked(request).mockResolvedValue({ album: { ...ownerAlbum, name: 'Vacanze' } });
+    const onUpdated = vi.fn();
+    render(<AlbumSettingsScreen album={ownerAlbum} onClose={vi.fn()} onUpdated={onUpdated} />);
+    fireEvent.change(screen.getByLabelText(/nome album/i), { target: { value: 'Vacanze' } });
+    fireEvent.click(screen.getByRole('button', { name: /rinomina/i }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/salvato/i));
+    expect(onUpdated).toHaveBeenCalledWith(expect.objectContaining({ name: 'Vacanze' }));
+  });
+
+  it('reports regeneration failure and preserves the existing code', async () => {
+    vi.mocked(request).mockRejectedValue(new Error('could_not_regenerate_invite'));
+    render(<AlbumSettingsScreen album={ownerAlbum} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /rigenera codice/i }));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/codice/i));
+    expect(screen.getByLabelText(/codice invito/i)).toHaveValue('ABC123');
   });
 });

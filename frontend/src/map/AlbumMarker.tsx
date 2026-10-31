@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import type { Cluster } from './useClusteredPhotos';
 
 interface AlbumMarkerProps {
@@ -10,11 +9,12 @@ export function AlbumMarker({ cluster, onOpen }: AlbumMarkerProps) {
   const previewPhotos = cluster.photos.slice(0, 2);
 
   return (
-    <motion.button
-      whileTap={{ scale: 0.9 }}
+    <button
+      type="button"
+      className="map-photo-marker"
       onClick={() => onOpen(cluster)}
       style={{ position: 'relative', width: 72, height: 72, border: 'none', background: 'none' }}
-      aria-label={cluster.isCluster ? `${cluster.photos.length} foto in questa zona` : 'Apri foto'}
+      aria-label={cluster.isCluster ? `Apri ${cluster.photos.length} foto in questa zona` : `Apri foto: ${cluster.photos[0]?.caption || cluster.photos[0]?.locationLabel || 'ricordo senza titolo'}`}
     >
       {previewPhotos.map((photo, i) => (
         <img
@@ -23,6 +23,8 @@ export function AlbumMarker({ cluster, onOpen }: AlbumMarkerProps) {
           alt=""
           style={{
             position: 'absolute',
+            top: 0,
+            left: 0,
             width: 56,
             height: 56,
             objectFit: 'cover',
@@ -40,13 +42,13 @@ export function AlbumMarker({ cluster, onOpen }: AlbumMarkerProps) {
             position: 'absolute',
             bottom: -6,
             right: -6,
-            background: 'var(--color-coral)',
+            background: 'var(--color-coral-dark)',
             fontSize: 13,
           }}
         >
           {cluster.photos.length}
         </span>
       )}
-    </motion.button>
+    </button>
   );
 }

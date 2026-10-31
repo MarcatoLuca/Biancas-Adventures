@@ -5,16 +5,28 @@ import { supabase } from '../lib/supabaseClient';
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-    });
+    let active = true;
+    async function loadSession() {
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        if (!active) return;
+        if (sessionError) throw sessionError;
+        setUser(data.session?.user ?? null);
+      } catch (err) {
+        if (active) setError(err instanceof Error ? err.message : 'unknown_error');
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadSession();
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session) setError(null);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => { active = false; sub.subscription.unsubscribe(); };
   }, []);
 
   async function signInWithPassword(email: string, password: string) {
@@ -23,8 +35,9 @@ export function useAuth() {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   }
 
-  return { user, loading, signInWithPassword, signOut };
+  return { user, loading, error, signInWithPassword, signOut };
 }

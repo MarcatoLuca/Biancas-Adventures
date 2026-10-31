@@ -1,4 +1,5 @@
 import type { Photo } from './usePhotos';
+import { Dialog } from '../ui/Dialog';
 
 interface UnplacedQueuePanelProps {
   photos: Photo[];
@@ -9,33 +10,27 @@ interface UnplacedQueuePanelProps {
 
 export function UnplacedQueuePanel({ photos, totalPhotos, onSelect, onClose }: UnplacedQueuePanelProps) {
   return (
-    <div className="panel-sheet" style={{ top: 0, right: 0, bottom: 0, left: 'auto', width: 320 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ color: 'var(--color-sky-dark)' }}>🧭 Da posizionare</h2>
-        <button className="btn btn-ghost" onClick={onClose}>✖️</button>
-      </div>
+    <Dialog title="Foto da posizionare" onClose={onClose}>
       {photos.length === 0 && totalPhotos === 0 ? (
-        <p style={{ color: 'var(--color-coral-dark)', fontWeight: 700 }}>
-          Nessuna foto trovata per questo album. Controlla che il link dell'Album Condiviso iCloud sia corretto e pubblico.
-        </p>
+        <p className="empty-state">Nessuna foto trovata per questo album. Controlla che il link dell’Album Condiviso iCloud sia corretto e pubblico.</p>
       ) : photos.length === 0 ? (
-        <p style={{ color: 'var(--color-grass-dark)', fontWeight: 700 }}>Tutte le foto sono posizionate! 🎉</p>
+        <p className="notice notice-success">Tutte le foto sono posizionate! Il vostro viaggio è sulla mappa.</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {photos.map((photo) => (
-            <li key={photo.photoGuid}>
-              <button
-                className="btn"
-                style={{ width: '100%', background: 'var(--color-sun)', color: 'var(--color-ink)' }}
-                onClick={() => onSelect(photo)}
-              >
-                <span aria-hidden="true">📷 </span>
-                {photo.caption || `Foto ${photo.photoGuid}`}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          <p className="muted">Ogni ricordo merita un posto. Scegli una foto e indica dove è stata scattata.</p>
+          <ul className="unplaced-list">
+            {photos.map((photo, index) => (
+              <li key={photo.photoGuid}>
+                <button type="button" className="queue-item" onClick={() => onSelect(photo)}>
+                  {photo.thumbUrl ? <img src={photo.thumbUrl} alt="" loading="lazy" /> : <span className="queue-placeholder" aria-hidden="true">▧</span>}
+                  <span>{photo.caption || `Foto ${index + 1}`}<small>Aggiungi una posizione</small></span>
+                  <span aria-hidden="true">→</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
-    </div>
+    </Dialog>
   );
 }

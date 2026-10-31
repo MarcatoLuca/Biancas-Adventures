@@ -7,3 +7,5 @@ dist/
 .env.test
 .dev.vars
 *.local
+frontend/test-results/
+frontend/playwright-report/
